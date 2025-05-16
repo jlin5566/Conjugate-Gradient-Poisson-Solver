@@ -2,7 +2,7 @@
 
 ### Program
  - Conjugate gradient method to solve the 2D Poisson equation
-   - CSR(Compressed Sparse Row) matrix
+   - CSR(Compressed Sparse Row) matrix  
    - MKL  
  - SOR method to solve the 2D Poisson equation
  - Hybrid Parallel Programming  
@@ -17,5 +17,10 @@
  - Principles
  - Implementation
    - Conjugate gradient method  
+     - CSR(Compressed Sparse Row) matrix  
+     - MKL  
    - Hybrid Parallel Programming  
+     - OpenMP  
+     - MPI  
+     - GPU
  - Performance  
