@@ -5,6 +5,7 @@
    - CSR(Compressed Sparse Row) matrix  
    - MKL  
  - SOR method to solve the 2D Poisson equation
+   - Odd-even ordering
  - Hybrid Parallel Programming  
    - OpenMP  
    - MPI  
