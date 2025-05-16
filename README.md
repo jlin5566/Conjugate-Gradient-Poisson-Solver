@@ -2,14 +2,19 @@
 
 ### Program
  - Conjugate gradient method to solve the 2D Poisson equation  
- - SOR method to solve the 2D Poisson equation  
- - Parallel Programming with OpenMP  
- - Parallel Programming with MPI  
- - Parallel Programming with GPU  
- - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)  
- - Compare the performance with SOR  
+ - SOR method to solve the 2D Poisson equation
+ - Hybrid Parallel Programming  
+   - OpenMP  
+   - MPI  
+   - GPU
+ - Performance  
+   - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)  
+   - Compare the performance with SOR  
 
 ### Slides & presentation  
- - Principles  
- - Implementation  
+ - Principles
+ - Implementation
+   - Conjugate gradient method  
+   - SOR method  
+   - Hybrid Parallel Programming  
  - Performance  
