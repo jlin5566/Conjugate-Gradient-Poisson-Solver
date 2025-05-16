@@ -24,3 +24,5 @@
      - MPI  
      - GPU
  - Performance  
+   - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)  
+   - Compare the performance with SOR  
