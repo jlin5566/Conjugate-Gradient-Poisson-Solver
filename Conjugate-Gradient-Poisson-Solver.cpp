@@ -1,24 +1,19 @@
-// -------- File: def.h --------
 #define ROW 51
 #define COL 51
 #define pi 3.141592
 #define itmax 100000
 
-// -------- File: Poisson_Solver.c --------
 #include <stdio.h>
 #include <math.h>
 
 #include <string.h>
-#include "def.h"
 
 void initialization(double **p);
 void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
 
 //-----------------------------------
-// Poisson Solvers - Jacobi, SOR, CG
+// Poisson Solvers - CG, SOR, CG
 //-----------------------------------
-void Jacobi(double **p,double dx, double dy, double tol,
-                       double *tot_time, int *iter,int BC);
 void SOR(double **p,double dx, double dy, double tol, double omega,
                                double *tot_time,int *iter,int BC);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
@@ -51,16 +46,16 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
   switch (method) {
     case 1 :
-      //-----------------------------
-      //        Jacobi Method
-      //-----------------------------
-      initialization(u);
-      Jacobi(u,dx,dy,tol,&tot_time,&iter,BC);
-      error_rms(u,u_anal,&err);
-      printf("Jacobi Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
+       //-----------------------------
+       //  Conjugate Gradient Method
+       //-----------------------------
+       initialization(u);
+       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
+       error_rms(u,u_anal,&err);
+       printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
-      file_name = "Jacobi_result.plt";
-      write_u(dir_name,file_name,u,dx,dy);
+       file_name = "CG_result.plt";
+       write_u(dir_name,file_name,u,dx,dy);
       break;
 
     case 2 :
@@ -73,19 +68,6 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
 
        file_name = "SOR_result.plt";
-       write_u(dir_name,file_name,u,dx,dy);
-      break;
-
-    case 3 :
-       //-----------------------------
-       //  Conjugate Gradient Method
-       //-----------------------------
-       initialization(u);
-       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
-       error_rms(u,u_anal,&err);
-       printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
-
-       file_name = "CG_result.plt";
        write_u(dir_name,file_name,u,dx,dy);
       break;
   }
@@ -170,7 +152,6 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
 //          both x and y directions.
 //
 
-
 #include <stdlib.h>
 
 //-----------------------------------
@@ -224,12 +205,12 @@ int main(void)
     // BC = 1 : Boundary condition Case 1
     //    = 2 : Boundary condition Case 2
     //
-    // method = 1 : Jacobi method
+    // method = 1 : Conjugate Gradient method
     //        = 2 : SOR method
-    //        = 3 : Conjugate Gradient method
+    //
     //----------------------------------------
     BC = 1;
-    method = 3;
+    method = 1;
 
     poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
 
@@ -239,105 +220,7 @@ int main(void)
     return 0;
 }
 
-
-// -------- File: Jacobi.c --------
 #include <time.h>
-
-void Jacobi(double **p,double dx, double dy, double tol,
-                       double *tot_time,int *iter,int BC)
-{
-    int i,j,k,it;
-    int Nx,Ny;
-    double beta,rms;
-    double SUM1,SUM2;
-    double **p_new;
-    time_t start_t =0, end_t =0;
-
-    start_t = clock();
-    beta = dx/dy;
-
-    p_new = (double **) malloc(ROW *sizeof(double));
-    for (i=0;i<ROW;i++)
-    {
-      p_new[i]      = (double *) malloc(COL * sizeof(double));
-    }
-    initialization(p_new);
-
-    for (it=1;it<itmax;it++){
-        SUM1 = 0;
-        SUM2 = 0;
-
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-            p_new[i][j] =  (p[i+1][j]+p[i-1][j]
-                            + pow(beta,2) *(p[i][j+1]+p[i][j-1])
-                            - dx*dx*func(i,j,dx,dy))/(2*(1+pow(beta,2)));
-            }
-        }
-
-        //------------------------
-        //  Boundary conditions
-        //------------------------
-
-        // Boundary - Case 1
-        if (BC == 1){
-          for (j=0;j<COL;j++){
-              p_new[0][j] = 0;
-              p_new[ROW-1][j] = 0;
-          }
-
-          for (i=0;i<ROW;i++) {
-              p_new[i][0] = p_new[i][1];
-              p_new[i][COL-1] = p_new[i][COL-2];
-          }
-        }
-        // Boundary - Case 2
-        else if (BC ==2){
-          for (j=0;j<COL;j++){
-              p_new[0][j] = -1/(2*pow(pi,2))*func(0,j,dx,dy);
-              p_new[ROW-1][j] = -1/(2*pow(pi,2))*func(ROW-1,j,dx,dy);
-          }
-
-          for (i=0;i<ROW;i++) {
-              p_new[i][0] = -1/(2*pow(pi,2))*func(i,0,dx,dy);
-              p_new[i][COL-1] = -1/(2*pow(pi,2))*func(i,COL-1,dx,dy);
-          }
-        }
-
-        //------------------------
-        //  Convergence Criteria
-        //------------------------
-        for (i=1;i<ROW-1;i++){
-            for (j=1;j<COL-1;j++){
-                SUM1 += fabs(p_new[i][j]);
-                SUM2 += fabs(p_new[i+1][j] + p_new[i-1][j]
-                             + pow(beta,2)*(p_new[i][j+1] + p_new[i][j-1])
-                             - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
-            }
-        }
-
-        if ( SUM2/SUM1 < tol ){
-            free(p_new);
-            *iter = it;
-            end_t = clock();
-            *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
-            break;
-        }
-
-        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
-
-        //------------------------
-        //         Update
-        //------------------------
-        for (i=0;i<ROW;i++){
-            for (j=0;j<COL;j++){
-                p[i][j] = p_new[i][j];}}
-
-    }
-}
-
-
-// -------- File: SOR.c --------
 
 void SOR(double **p,double dx, double dy, double tol, double omega,
                                double *tot_time,int *iter,int BC)
@@ -670,4 +553,3 @@ double vvdot(double *a, double *b)
 
     return c;
 }
-
