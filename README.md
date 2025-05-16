@@ -15,6 +15,5 @@
  - Principles
  - Implementation
    - Conjugate gradient method  
-   - SOR method  
    - Hybrid Parallel Programming  
  - Performance  
