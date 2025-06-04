@@ -43,7 +43,7 @@ plt.plot(x_sor[mask_sor], z_sor[mask_sor], label="SOR", linestyle=':')
 # 設定 y 軸範圍
 ymin = min(np.min(z_a[mask_a]), np.min(z_cg[mask_cg]), np.min(z_sor[mask_sor]))
 ymax = max(np.max(z_a[mask_a]), np.max(z_cg[mask_cg]), np.max(z_sor[mask_sor]))
-margin = 0.1 * (ymax - ymin)
+margin = 0.1 * (ymax - ymin)+1e-10
 plt.ylim(ymin - margin, ymax + margin)
 
 plt.xlabel("x")
