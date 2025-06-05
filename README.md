@@ -1,5 +1,6 @@
 # Checklist
-# 你各位趕緊動起來做事阿 5/24
+# 你各位趕緊動起來做事阿。 5/24
+# Please use the Fork→Pull→Push→Pull Request→Merge workflow.  This is the requirement of the final project. 6/5
 
 ### Program
  - Conjugate gradient method to solve the 2D Poisson equation
@@ -27,4 +28,11 @@
      - GPU
  - Performance  
    - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)  
-   - Compare the performance with SOR  
+   - Compare the performance with SOR
+  
+### Issues  
+ - Make sure at least one PC can use OpenMP, MPI, and GPU to demonstrate the results.
+
+___________________________
+### Division of work  
+
