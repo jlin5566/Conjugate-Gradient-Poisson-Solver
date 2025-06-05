@@ -9,7 +9,7 @@
 
 ### Program
 - [ ] **Conjugate gradient method to solve the 2D Poisson equation**
-  - [ ] CSR (Compressed Sparse Row) matrix
+  - [x] CSR (Compressed Sparse Row) matrix **羅文鴻**
   - [ ] MKL
 - [ ] **SOR method to solve the 2D Poisson equation**
   - [ ] Odd-even ordering
