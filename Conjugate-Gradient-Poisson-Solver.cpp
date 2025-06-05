@@ -26,15 +26,17 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
 //-----------------------------------
 //        Mathematical tools
 //-----------------------------------
-double func(int i, int j, double dx, double dy);
-void func_anal(double **p, int row_num, int col_num, double dx, double dy);
-void error_rms(double **p, double **p_anal, double *err);
+double func(int i, int j, double dx, double dy);//定義RHS的解
+void func_anal(double **p, int row_num, int col_num, double dx, double dy);//定義解析解
+void error_rms(double **p, double **p_anal, double *err);//計算數值解與解析解的誤差
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
                     int BC, int method, const char *dir_name,bool use_matrix_A){
 
-  const char *file_name ;
 
-  int iter = 0;
+  const char *file_name ;//輸出的檔案名稱
+
+
+  int iter = 0;//迭代次數
   double Lx = 1.0, Ly = 1.0;
   double dx, dy, err = 0, tot_time = 0;
 
@@ -44,17 +46,19 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
   //-----------------------------
   //      Analytic Solutions
   //-----------------------------
-  file_name = "Analytic_solution.plt";
-  func_anal(u_anal,ROW,COL,dx,dy);
-  write_u(dir_name,file_name,u_anal,dx,dy);
+  file_name = "Analytic_solution.plt";//建立解析解並輸出的檔名
+  func_anal(u_anal,ROW,COL,dx,dy);//呼叫並計算每一格的解析解
+  write_u(dir_name,file_name,u_anal,dx,dy);//把解析解輸出成.plt
 
-  switch (method) {
+  switch (method) {//根據method值選擇要使用的方法
     case 1 :
        //-----------------------------
        //  Conjugate Gradient Method
        //-----------------------------
-       initialization(u);
+
+       initialization(u);//清空矩陣
        Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC,use_matrix_A);
+
        error_rms(u,u_anal,&err);
        printf("CG_%d method - Error : %e, Iteration : %d, Time : %f s \n",BC,err,iter,tot_time);
        if (BC==1){file_name = "CG_result_1.plt";}
@@ -78,12 +82,12 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
 }
 
-double func(int i,int j,double dx,double dy)
+double func(int i,int j,double dx,double dy)//定義RHS解
 {
     return sin(pi*i*dx)*cos(pi*j*dy);
 }
 
-void initialization(double **p)
+void initialization(double **p)//清空矩陣
 {
     int i,j;
     for (i=0;i<ROW;i++){
@@ -92,7 +96,7 @@ void initialization(double **p)
 
 }
 
-void error_rms(double **p, double **p_anal, double *err)
+void error_rms(double **p, double **p_anal, double *err)//計算誤差
 {
   int i,j;
   for (i=0;i<ROW;i++){
@@ -105,7 +109,7 @@ void error_rms(double **p, double **p_anal, double *err)
 }
 
 
-void func_anal(double **p, int row_num, int col_num, double dx, double dy)
+void func_anal(double **p, int row_num, int col_num, double dx, double dy)//精確解
 {
     int i,j;
     for (i=0;i<row_num;i++){
@@ -113,7 +117,10 @@ void func_anal(double **p, int row_num, int col_num, double dx, double dy)
             p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
 }
 
-void write_u(const char *dir_nm,const char *file_nm, double **p,double dx, double dy)
+
+void write_u(const char *dir_nm,const char *file_nm, double **p,double dx, double dy)//將結果輸出成檔案
+
+
 {
     FILE* stream;
     int i,j;
@@ -167,15 +174,12 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
 
 int main(int argc, char *argv[])
 {
-    int method   = 1;
     int BC       = 1;
     bool use_matrix_A = false;
-    if (argc==3){
-        method   = atoi(argv[1]);
-        BC       = atoi(argv[2]);
+    if (argc==2){
+        BC       = atoi(argv[1]);
     }
-    else if (argc ==4 && strcmp(argv[3], "true") == 0) {use_matrix_A = true;}
-    else {printf("Use default setting.\n");}
+    else if (argc ==3 && strcmp(argv[2], "true") == 0) {use_matrix_A = true;}
     double **u;
     double **u_anal;
 
@@ -189,13 +193,15 @@ int main(int argc, char *argv[])
     // --------------------------------------------------------
     //                    Memory allocation
     // --------------------------------------------------------
-    u      = (double **) malloc(ROW *sizeof(double *));
-    u_anal = (double **) malloc(ROW *sizeof(double *));
+
+    u      = (double **) malloc(ROW *sizeof(double *));//用來存儲數值解
+    u_anal = (double **) malloc(ROW *sizeof(double *));//用來存儲解析解
 
     // if (u == NULL || u_anal == NULL){
     //     fprintf(stderr, "malloc error\n");
     //     exit(1);
     // }
+
 
     for (i=0;i<ROW;i++)
     {
@@ -234,8 +240,21 @@ int main(int argc, char *argv[])
     //
     //----------------------------------------
 
-    poisson_solver(u,u_anal,tol,omega,BC,method,dir_name,use_matrix_A);
 
+
+    // -----------------------
+    //       CG method
+    // -----------------------
+    printf("\n[CG Method]\n");
+    poisson_solver(u,u_anal,tol,omega,BC,1,dir_name,use_matrix_A);  // method = 1
+
+    // -----------------------
+    //       SOR method
+    // -----------------------
+    printf("\n[SOR Method]\n");
+    poisson_solver(u,u_anal,tol,omega,BC,2,dir_name,use_matrix_A);  // method = 2
+
+    // 釋放記憶體
     for (int i = 0; i < ROW; i++){
         free(u[i]);
         free(u_anal[i]);
@@ -255,9 +274,11 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     double beta,rms;
     double SUM1,SUM2;
     double **p_new;
-    clock_t start_t =0, end_t =0;
 
-    start_t = clock();
+    clock_t start_t =0, end_t =0;//時間歸零
+
+
+    start_t = clock();//計時起點
     beta = dx/dy;
 
     p_new = (double **) malloc(ROW *sizeof(double *));
@@ -265,8 +286,8 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     {
       p_new[i]      = (double *) malloc(COL * sizeof(double));
     }
-    initialization(p_new);
-
+    initialization(p_new);//將矩陣歸零
+//主要迴圈
     for (it=1;it<itmax;it++){
         SUM1 = 0;
         SUM2 = 0;
@@ -313,6 +334,7 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
         //------------------------
         //  Convergence Criteria
         //------------------------
+        //判斷迴圈是否收斂
         for (i=1;i<ROW-1;i++){
             for (j=1;j<COL-1;j++){
                 SUM1 += fabs(p_new[i][j]);
@@ -717,7 +739,7 @@ void make_Abx(double **A,double *b,double *x,
 //------------------------------------------------------------
 //              Matrix Calcuation Functions
 //------------------------------------------------------------
-double norm_L2(double *a)
+double norm_L2(double *a)//計算L2向量範數
 {
     int i;
     double sum = 0;
@@ -728,7 +750,7 @@ double norm_L2(double *a)
     return sqrt(sum);
 }
 
-void vmdot(double **A,double *x,double *b)
+void vmdot(double **A,double *x,double *b)//矩陣-向量乘法b=A*x
 {
     int i,j;
 
@@ -744,7 +766,7 @@ void vmdot(double **A,double *x,double *b)
     }
 }
 
-void Adot(double *x,double *b,int BC,int size)
+void Adot(double *x,double *b,int BC,int size)//公式化A運算
 {
     int i,j;
     double epi  =0.1;
@@ -800,7 +822,7 @@ void Adot(double *x,double *b,int BC,int size)
     }
 }
 
-double vvdot(double *a, double *b)
+double vvdot(double *a, double *b)//兩項量內積
 {
     int i;
     double c = 0;
