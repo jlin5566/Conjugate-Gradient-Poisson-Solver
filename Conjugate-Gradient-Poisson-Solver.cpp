@@ -1,15 +1,19 @@
-#define ROW 51
-#define COL 51
+// no parallelization, no even-odd ordering, assign N, method, BC, use_matrix_A in the command
+#define ROW 100
+#define COL 100
 #define pi 3.141592
-#define itmax 100000
+#define itmax 1000000
 
 #include <stdio.h>
 #include <math.h>
 
+// #include <mpi.h>
+// #include <omp.h>
 #include <string.h>
 
+
 void initialization(double **p);
-void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
+void write_u(const char *dir_nm,const char *file_nm, double **p,double dx, double dy);
 
 //-----------------------------------
 // Poisson Solvers - CG, SOR, CG
@@ -17,7 +21,7 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy);
 void SOR(double **p,double dx, double dy, double tol, double omega,
                                double *tot_time,int *iter,int BC);
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
-                                   double *tot_time,int *iter,int BC);
+                                   double *tot_time,int *iter,int BC,bool use_matrix_A);
 
 //-----------------------------------
 //        Mathematical tools
@@ -26,9 +30,9 @@ double func(int i, int j, double dx, double dy);
 void func_anal(double **p, int row_num, int col_num, double dx, double dy);
 void error_rms(double **p, double **p_anal, double *err);
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
-                    int BC, int method, char *dir_name){
+                    int BC, int method, const char *dir_name,bool use_matrix_A){
 
-  char *file_name ;
+  const char *file_name ;
 
   int iter = 0;
   double Lx = 1.0, Ly = 1.0;
@@ -50,11 +54,11 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        //  Conjugate Gradient Method
        //-----------------------------
        initialization(u);
-       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC);
+       Conjugate_Gradient(u,dx,dy,tol,&tot_time,&iter,BC,use_matrix_A);
        error_rms(u,u_anal,&err);
-       printf("CG method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
-
-       file_name = "CG_result.plt";
+       printf("CG_%d method - Error : %e, Iteration : %d, Time : %f s \n",BC,err,iter,tot_time);
+       if (BC==1){file_name = "CG_result_1.plt";}
+       else if (BC==2){file_name = "CG_result_2.plt";}
        write_u(dir_name,file_name,u,dx,dy);
       break;
 
@@ -65,9 +69,9 @@ void poisson_solver(double **u, double **u_anal, double tol, double omega,
        initialization(u);
        SOR(u,dx,dy,tol,omega,&tot_time,&iter,BC);
        error_rms(u,u_anal,&err);
-       printf("SOR Method - Error : %e, Iteration : %d, Time : %f s \n",err,iter,tot_time);
-
-       file_name = "SOR_result.plt";
+       printf("SOR_%d Method - Error : %e, Iteration : %d, Time : %f s \n",BC,err,iter,tot_time);
+       if (BC==1){file_name = "SOR_result_1.plt";}
+       else if (BC==2){file_name = "SOR_result_2.plt";}
        write_u(dir_name,file_name,u,dx,dy);
       break;
   }
@@ -109,7 +113,7 @@ void func_anal(double **p, int row_num, int col_num, double dx, double dy)
             p[i][j] = -1/(2*pow(pi,2))*sin(pi*i*dx)*cos(pi*j*dy); }}
 }
 
-void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
+void write_u(const char *dir_nm,const char *file_nm, double **p,double dx, double dy)
 {
     FILE* stream;
     int i,j;
@@ -129,14 +133,14 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
 //
 //  Programming for 2D Poisson Equation solving 2D Poisson Equation
 //
-//  Laplce(u(x,y)) = f(x,y) for (x,y) in domain
+//  Laplace(u(x,y)) = f(x,y) for (x,y) in domain
 //  on the boundary boundary_D and boundary_N
 //
 //  u(x,y) = g(x,y) on boundary_D
 //  du/dn  = h(x,y) on boundary N
 //
 //
-//  Domian
+//  Domain
 //      [x,y] is in [0,1] X [0,1]
 //      f(x,y) = sin(pi*x) * cos(pi *y)
 //      Analytic solution is
@@ -144,8 +148,8 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
 //
 //  Boundary Condition
 //      Case 1
-//          Diriclet bondary condition u(x,y) = 0 in x direction q
-//          Neumann boundary condition du/dn = 0 in y direction
+//          Dirichlet bondary condition u(x,y) = 0 in y axis
+//          Neumann boundary condition du/dn = 0 in x axis
 //
 //      Case 2
 //          Dirichlet boundary conditioins using analytical solution
@@ -159,16 +163,25 @@ void write_u(char *dir_nm,char *file_nm, double **p,double dx, double dy)
 //-----------------------------------
 
 void poisson_solver(double **u, double **u_anal, double tol, double omega,
-                    int BC, int method, char *dir_name);
+                    int BC, int method, const char *dir_name,bool use_matrix_A);
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    int method   = 1;
+    int BC       = 1;
+    bool use_matrix_A = false;
+    if (argc==3){
+        method   = atoi(argv[1]);
+        BC       = atoi(argv[2]);
+    }
+    else if (argc ==4 && strcmp(argv[3], "true") == 0) {use_matrix_A = true;}
+    else {printf("Use default setting.\n");}
     double **u;
     double **u_anal;
 
-    char *dir_name ;
+    const char *dir_name ;
 
-    int i, method, BC;
+    int i;
     double tol, omega;
 
     int make_fold= system("mkdir RESULT");
@@ -176,26 +189,37 @@ int main(void)
     // --------------------------------------------------------
     //                    Memory allocation
     // --------------------------------------------------------
-    u      = (double **) malloc(ROW *sizeof(double));
-    u_anal = (double **) malloc(ROW *sizeof(double));
+    u      = (double **) malloc(ROW *sizeof(double *));
+    u_anal = (double **) malloc(ROW *sizeof(double *));
+
+    // if (u == NULL || u_anal == NULL){
+    //     fprintf(stderr, "malloc error\n");
+    //     exit(1);
+    // }
 
     for (i=0;i<ROW;i++)
     {
       u[i]      = (double *) malloc(COL * sizeof(double));
       u_anal[i] = (double *) malloc(COL * sizeof(double));
+    //   if (u[i] == NULL || u_anal[i] == NULL){
+    //     fprintf(stderr, "malloc col[%d] error\n", i);
+    //     exit(1);
+    //   }
     }
+
+
 
     //--------------------
     //   Initial setting
     //--------------------
-    tol = 1e-6;
+    tol = 1e-8;
     omega = 1.8;
     dir_name = "./RESULT/";
 
     printf("\n");
     printf("---------------------------------------- \n");
     printf("Nx : %d, Ny : %d\n",ROW,COL);
-    printf("Tolerance : %f, Omega : %f \n",tol, omega);
+    printf("Tolerance : %e, Omega : %f \n",tol, omega);
     printf("---------------------------------------- \n");
     printf("\n");
 
@@ -209,11 +233,13 @@ int main(void)
     //        = 2 : SOR method
     //
     //----------------------------------------
-    BC = 1;
-    method = 1;
 
-    poisson_solver(u,u_anal,tol,omega,BC,method,dir_name);
+    poisson_solver(u,u_anal,tol,omega,BC,method,dir_name,use_matrix_A);
 
+    for (int i = 0; i < ROW; i++){
+        free(u[i]);
+        free(u_anal[i]);
+    }
     free(u);
     free(u_anal);
 
@@ -229,12 +255,12 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     double beta,rms;
     double SUM1,SUM2;
     double **p_new;
-    time_t start_t =0, end_t =0;
+    clock_t start_t =0, end_t =0;
 
     start_t = clock();
     beta = dx/dy;
 
-    p_new = (double **) malloc(ROW *sizeof(double));
+    p_new = (double **) malloc(ROW *sizeof(double *));
     for (i=0;i<ROW;i++)
     {
       p_new[i]      = (double *) malloc(COL * sizeof(double));
@@ -295,15 +321,19 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
                              - (2+2*pow(beta,2))*p_new[i][j]-dx*dx*func(i,j,dx,dy));
             }
         }
-
+        // if (it % 200 == 0) {
+        //     printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
+        //     }
         if ( SUM2/SUM1 < tol ){
+            for (int i =0; i<ROW; i++){
+                free(p_new[i]);
+            }
             free(p_new);
             *iter = it;
             end_t = clock();
             *tot_time = (double)(end_t - start_t)/(CLOCKS_PER_SEC);
             break;
         }
-        // printf("Iteration : %d, SUM1 : %f, SUM2 : %f, Ratio : %f \n",it,SUM1,SUM2,SUM2/SUM1);
         //------------------------
         //         Update
         //------------------------
@@ -314,7 +344,6 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
     }
 }
 
-
 // -------- File: Conjugate_Gradient.c --------
 
 //-----------------------------------
@@ -323,16 +352,18 @@ void SOR(double **p,double dx, double dy, double tol, double omega,
 double norm_L2(double *a);
 double vvdot(double *a, double *b);
 void vmdot(double **A,double *x,double *b);
-
+void Adot(double *x,double *b,int BC,int size);
 void make_Abx(double **A, double *b, double *x, double**u
-              ,double dx, double dy);
+              ,double dx, double dy, int BC,int size, bool use_matrix_A);
 
 //-----------------------------------
 //      Mathematical functions
 //-----------------------------------
 
+#define IDX(i, j) ((i) * (COL-2) + (j)) 
+
 void Conjugate_Gradient(double **p,double dx, double dy, double tol,
-                                   double *tot_time,int *iter, int BC)
+                                   double *tot_time,int *iter, int BC, bool use_matrix_A)
 {
     int i,j,k,it;
     double alpha,beta ;
@@ -340,35 +371,33 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
     double **A;
     double *tmp, *x, *b, *z, *r, *r_new;
 
-    time_t start_t =0, end_t =0;
+    clock_t start_t =0, end_t =0;
 
     start_t = clock();
-
-    A = (double **) malloc(ROW*COL * sizeof(double));
-    for (i=0;i<ROW*COL;i++)
-    {
-      A[i] = (double *) malloc(ROW*COL * sizeof(double));
+    if (use_matrix_A){
+        A = (double **) calloc((ROW-2)*(COL-2), sizeof(double *));
+        for (i=0;i<(ROW-2)*(COL-2);i++) {A[i] = (double *) calloc((ROW-2)*(COL-2), sizeof(double));}
     }
-    tmp    = (double *) malloc(ROW*COL * sizeof(double));
-    x      = (double *) malloc(ROW*COL * sizeof(double));
-    b      = (double *) malloc(ROW*COL * sizeof(double));
-    z      = (double *) malloc(ROW*COL * sizeof(double));
-    r      = (double *) malloc(ROW*COL * sizeof(double));
-    r_new  = (double *) malloc(ROW*COL * sizeof(double));
+    tmp    = (double *) malloc((ROW-2)*(COL-2) * sizeof(double));
+    x      = (double *) calloc((ROW-2)*(COL-2), sizeof(double));
+    b      = (double *) calloc((ROW-2)*(COL-2), sizeof(double));
+    z      = (double *) malloc((ROW-2)*(COL-2) * sizeof(double));
+    r      = (double *) malloc((ROW-2)*(COL-2) * sizeof(double));
+    r_new  = (double *) malloc((ROW-2)*(COL-2) * sizeof(double));
+    
+    if (use_matrix_A){
+        make_Abx(A,b,x,p,dx,dy,BC,ROW,use_matrix_A);
+        vmdot(A,x,tmp);
+    }
+    else {
+        make_Abx(NULL,b,x,p,dx,dy,BC,ROW,use_matrix_A);
+        Adot(x,tmp,BC,ROW);
+    }
 
-    // for (i=0;i<ROW*COL;i++){
-    //     for (j=0;j<ROW*COL;j++){
-    //         A[i][j] = 0;
-    //     }
-    // }
-
-    make_Abx(A,b,x,p,dx,dy);
-    vmdot(A,x,tmp);
-
-   for (i=0;i<ROW;i++){
-       for (j=0;j<COL;j++){
-           r[COL*i+j] = b[COL*i+j] - tmp[COL*i+j];
-           z[COL*i+j] = r[COL*i+j];
+   for (i=0;i<ROW-2;i++){
+       for (j=0;j<COL-2;j++){
+           r[IDX(i,j)] = b[IDX(i,j)] - tmp[IDX(i,j)];
+           z[IDX(i,j)] = r[IDX(i,j)];
        }
    }
 
@@ -377,31 +406,55 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
    //---------------------------------------
    for (it=0;it<itmax;it++)
    {
-       vmdot(A,z,tmp);
+       if(use_matrix_A){vmdot(A,z,tmp);}
+       else{Adot(z,tmp,BC,ROW);}
        alpha = vvdot(r,r)/vvdot(z,tmp);
 
 
-       for (i=0;i<ROW;i++){
-           for (j=0;j<COL;j++){
-               x[COL*i+j] = x[COL*i+j] + alpha * z[COL*i+j];
-               r_new[COL*i+j] = r[COL*i+j] - alpha*tmp[COL*i+j];
+       for (i=0;i<ROW-2;i++){
+           for (j=0;j<COL-2;j++){
+               x[IDX(i,j)] = x[IDX(i,j)] + alpha * z[IDX(i,j)];
+               r_new[IDX(i,j)] = r[IDX(i,j)] - alpha*tmp[IDX(i,j)];
            }
        }
 
+    //    if (it % 50 == 0) {
+    //     printf("iteration=%d, res=%.3e\n", it, norm_L2(r_new));
+    //     }
+
        if (norm_L2(r_new) < tol ){
-          // printf("iteration : %d, tol : %f, value : %f\n",it,tol,norm_L2(r_new) );
           //---------------------------------------
           //   Redistribute x vector to array
           //---------------------------------------
-          for (i=0;i<ROW;i++)
-          {
-            for (j=0;j<COL;j++)
-            {
-              p[i][j] = x[COL*i+j];
+          for (i=0;i<ROW-2;i++){
+            for (j=0;j<COL-2;j++){
+                p[i+1][j+1] = x[IDX(i,j)];
             }
           }
+          if (BC==1){
+            for(int i=0; i<COL; i++){
+                p[i][0]       = p[i][1];       
+                p[i][COL-1]   = p[i][COL-2];   
+            }
+          }
+          else if (BC==2){
+            for(int i=0; i<ROW; i++){
+                p[i][0]       = -1/(2*pow(pi,2))*func(i,0,dx,dy);       
+                p[i][COL-1]   = -1/(2*pow(pi,2))*func(i,COL-1,dx,dy);  
+            }
+            for(int j=0; j<COL; j++){
+                p[0][j]       = -1/(2*pow(pi,2))*func(0,j,dx,dy);       
+                p[ROW-1][j]   = -1/(2*pow(pi,2))*func(ROW-1,j,dx,dy);  
+            }
+          }
+
           *iter = it;
-          free(A);
+          if (use_matrix_A){
+            for (int i = 0; i < (ROW-2)*(COL-2); i++){
+                free(A[i]);
+            }
+            free(A);
+          }
           free(tmp);
           free(x);
           free(b);
@@ -415,99 +468,248 @@ void Conjugate_Gradient(double **p,double dx, double dy, double tol,
        }
 
        beta = vvdot(r_new,r_new)/vvdot(r,r);
-       for (i=0;i<ROW;i++){
-           for (j=0;j<COL;j++){
-               z[COL*i+j] = r_new[COL*i+j] + beta*z[COL*i+j];
-               r[COL*i+j] = r_new[COL*i+j];
+       for (i=0;i<ROW-2;i++){
+           for (j=0;j<COL-2;j++){
+               z[IDX(i,j)] = r_new[IDX(i,j)] + beta*z[IDX(i,j)];
+               r[IDX(i,j)] = r_new[IDX(i,j)];
            }
        }
    }
-
 }
 
 //------------------------------------------------------------
 //             Make Stiffness matrix of CG method
 //------------------------------------------------------------
 void make_Abx(double **A,double *b,double *x,
-              double **u,double dx, double dy)
+              double **u,double dx, double dy, int BC, int size, bool use_matrix_A)
 {
     int i,j,k,l;
+    double epi  =0.1;
+    double sac_0  = 1.0+dx*(epi*epi-1)*sin(i*dx*pi)*epi*dx/2;
+    double sac_1  = 1.0+dx*(epi*epi-1)*sin(i*dx*pi)*(1-epi)*dx/2;
     //--------------------------------
     //         Make Matrix A
     //--------------------------------
-    for (k=0;k<ROW;k++){
-        for (l=0;l<COL;l++){
-            if (k==l){
-                if (k==0 || k==ROW-1){
-                  for (i=0;i<ROW;i++){
-                      A[COL*k+i][ROW*l+i]   = 1;
-                  }
-                }
-                else{
-                  for (i=0;i<ROW;i++){
-                      if (i == 0){
-                          A[COL*k+i][ROW*l+i]   = -1;
-                          A[COL*k+i+1][ROW*l+i] = 1;
-                      }
-                      else if (i == ROW-1){
-                          A[COL*k+i][ROW*l+i]   = -1;
-                          A[COL*k+i-1][ROW*l+i] = 1;
-                      }
-                      else {
-                          A[COL*k+i][ROW*l+i]   = -4;
-                          A[COL*k+i-1][ROW*l+i] = 1;
-                          A[COL*k+i+1][ROW*l+i] = 1;
-                      }
-                  }
-                }
-            }
-
-            else if ( abs(k-l) == 1 && k!=0 && k!=ROW-1){
-                for (i=0;i<ROW;i++){
-                  if (i==0 || i==ROW-1)
-                    A[COL*k+i][ROW*l+i] = 0;
-                  else
-                    A[COL*k+i][ROW*l+i] = 1;
-                }
-            }
-            else{
-                for (i=0;i<ROW;i++){
-                    for (j=0;j<COL;j++){
-                        A[COL*k+i][ROW*l+j] = 0;
+    if (use_matrix_A){
+        if (BC==1){
+            for (i=0;i<ROW-2;i++){
+                for (j=0;j<COL-2;j++){
+                    if (i==0){
+                        if (j==0){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            // A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=2;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==1&&size<23){
+                            A[IDX(i,j)][IDX(i,j)]=-4-sac_0;
+                            A[IDX(i,j)][IDX(i,j-1)]=2;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==COL-2&&size<23){
+                            A[IDX(i,j)][IDX(i,j)]=-4-sac_1;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=2;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==COL-3){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=2;
+                            // A[IDX(i,j)][IDX(i,j+1)]=1;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else{
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                    }
+                    else if (i==ROW-3){
+                        if (j==0){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            // A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=2;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==1&&size<23){
+                            A[IDX(i,j)][IDX(i,j)]=-4-sac_0;
+                            A[IDX(i,j)][IDX(i,j-1)]=2;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==COL-2&&size<23){
+                            A[IDX(i,j)][IDX(i,j)]=-4-sac_0;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=2;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==COL-3){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=2;
+                            // A[IDX(i,j)][IDX(i,j+1)]=1;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else{
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                    }
+                    else if (i!=0&&i!=ROW-3&&j==0){
+                        A[IDX(i,j)][IDX(i,j)]=-4;
+                        // A[IDX(i,j)][IDX(i,j-1)]=1;
+                        A[IDX(i,j)][IDX(i,j+1)]=2;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                    else if (i!=0&&i!=ROW-3&&j==1&&size<23){
+                        A[IDX(i,j)][IDX(i,j)]=-4-sac_0;
+                        A[IDX(i,j)][IDX(i,j-1)]=2;
+                        A[IDX(i,j)][IDX(i,j+1)]=1;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                    else if (i!=0&&i!=ROW-3&&j==COL-2&&size<23){
+                        A[IDX(i,j)][IDX(i,j)]=-4-sac_0;
+                        A[IDX(i,j)][IDX(i,j-1)]=1;
+                        A[IDX(i,j)][IDX(i,j+1)]=2;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                    else if (i!=0&&i!=ROW-3&&j==COL-3){
+                        A[IDX(i,j)][IDX(i,j)]=-4;
+                        A[IDX(i,j)][IDX(i,j-1)]=2;
+                        // A[IDX(i,j)][IDX(i,j+1)]=1;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                    else{
+                        A[IDX(i,j)][IDX(i,j)]=-4;
+                        A[IDX(i,j)][IDX(i,j-1)]=1;
+                        A[IDX(i,j)][IDX(i,j+1)]=1;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
                     }
                 }
             }
-            // printf("i: %d, j :  %d \n",k,l);
-            // for (j=0;j<ROW;j++){
-            //   printf("%d ",i);
-            //   for (i=0;i<COL;i++){
-            //       printf("%f ",A[COL*k+i][ROW*l+j]);
-            //   }
-            //   printf("\n");
-            // }
-            // printf("\n");
+        }
+        else if (BC==2){
+            for (i=0;i<ROW-2;i++){
+                for (j=0;j<COL-2;j++){
+                    if (i==0){
+                        if (j==0){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            // A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==COL-3){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            // A[IDX(i,j)][IDX(i,j+1)]=1;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else{
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            // A[IDX(i,j)][IDX(i-1,j)]=1;
+                            A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                    }
+                    else if (i==ROW-3){
+                        if (j==0){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            // A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else if (j==COL-3){
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            // A[IDX(i,j)][IDX(i,j+1)]=1;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                        else{
+                            A[IDX(i,j)][IDX(i,j)]=-4;
+                            A[IDX(i,j)][IDX(i,j-1)]=1;
+                            A[IDX(i,j)][IDX(i,j+1)]=1;
+                            A[IDX(i,j)][IDX(i-1,j)]=1;
+                            // A[IDX(i,j)][IDX(i+1,j)]=1;
+                        }
+                    }
+                    else if (i!=0&&i!=ROW-3&&j==0){
+                        A[IDX(i,j)][IDX(i,j)]=-4;
+                        // A[IDX(i,j)][IDX(i,j-1)]=1;
+                        A[IDX(i,j)][IDX(i,j+1)]=1;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                    else if (i!=0&&i!=ROW-3&&j==COL-3){
+                        A[IDX(i,j)][IDX(i,j)]=-4;
+                        A[IDX(i,j)][IDX(i,j-1)]=1;
+                        // A[IDX(i,j)][IDX(i,j+1)]=1;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                    else{
+                        A[IDX(i,j)][IDX(i,j)]=-4;
+                        A[IDX(i,j)][IDX(i,j-1)]=1;
+                        A[IDX(i,j)][IDX(i,j+1)]=1;
+                        A[IDX(i,j)][IDX(i-1,j)]=1;
+                        A[IDX(i,j)][IDX(i+1,j)]=1;
+                    }
+                }
+            }
         }
     }
+        
 
     //--------------------------------
     //         Make Vector x
     //--------------------------------
-    for (i=0;i<ROW;i++){
-        for (j=0;j<COL;j++){
-            x[ROW*i+j] = u[i][j];
+    for (i=0;i<ROW-2;i++){
+        for (j=0;j<COL-2;j++){
+            x[IDX(i,j)] = u[i+1][j+1];
         }
     }
+
     //--------------------------------
     //        Make Vector b
     //--------------------------------
-    for (i=0;i<ROW;i++){
-        for (j=0;j<COL;j++){
-          if (i==0 || i==ROW-1 || j==0 || j==COL-1)
-            b[ROW*i+j] = 0;//1/(2*pow(pi,2))*func(i,j,dx,dy);
-          else
-              b[ROW*i+j] = dx*dx*func(i,j,dx,dy);
-
-          // printf(" i:%d, j:%d, b[i][j] : %f\n",i,j,b[ROW*i+j] );
+    if (BC==1){
+        for (i=0;i<ROW-2;i++){
+            for (j=0;j<COL-2;j++){
+                b[IDX(i,j)] = dx*dx*func(i+1,j+1,dx,dy);
+            }
+        }
+    }
+    else if(BC==2){
+        for (i=0;i<ROW-2;i++){
+            for (j=0;j<COL-2;j++){
+                b[IDX(i,j)] = dx*dx*func(i+1,j+1,dx,dy);
+                if(i==0)    {b[IDX(i,j)] += (-1)*-1/(2*pow(pi,2))*func(i,j+1,dx,dy);}
+                if(i==ROW-3){b[IDX(i,j)] += (-1)*-1/(2*pow(pi,2))*func(i+2,j+1,dx,dy);}
+                if(j==0)    {b[IDX(i,j)] += (-1)*-1/(2*pow(pi,2))*func(i+1,j,dx,dy);}
+                if(j==COL-3){b[IDX(i,j)] += (-1)*-1/(2*pow(pi,2))*func(i+1,j+2,dx,dy);}
+            }
         }
     }
 }
@@ -520,7 +722,7 @@ double norm_L2(double *a)
     int i;
     double sum = 0;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=0;i<(ROW-2)*(COL-2);i++){
         sum = sum + pow(a[i],2);
     }
     return sqrt(sum);
@@ -530,15 +732,71 @@ void vmdot(double **A,double *x,double *b)
 {
     int i,j;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=0;i<(ROW-2)*(COL-2);i++){
             b[i] = 0;
     }
 
-    for (i=0;i<ROW*COL;i++){
-        for (j=0;j<ROW*COL;j++){
+    for (i=0;i<(ROW-2)*(COL-2);i++){
+        for (j=0;j<(ROW-2)*(COL-2);j++){
             b[i] = b[i] + A[i][j]*x[j];
         }
 
+    }
+}
+
+void Adot(double *x,double *b,int BC,int size)
+{
+    int i,j;
+    double epi  =0.1;
+    double dx   = 1.0/(ROW-1), dy = 1.0/(COL-1);
+
+    for (i=0;i<(ROW-2)*(COL-2);i++){
+            b[i] = 0;
+    }
+
+    if (BC==1){
+        if(size<23){
+            for (i=0;i<ROW-2;i++){
+                double sac_0  = 1.0+dx*(epi*epi-1)*sin(i*dx*pi)*epi*dx/2;
+                double sac_1  = 1.0+dx*(epi*epi-1)*sin(i*dx*pi)*(1-epi)*dx/2;
+                for (j=0;j<COL-2;j++){
+                    double l = -4*x[IDX(i,j)];
+                    if(i>0)    {l+=x[IDX(i-1,j)];}
+                    if(i<ROW-3){l+=x[IDX(i+1,j)];}
+                    if(j>0)    {l+=(j==COL-3)?2*x[IDX(i,j-1)]:x[IDX(i,j-1)];
+                                if (j==1)    {l-=sac_0*x[IDX(i,j)];l+=x[IDX(i,j-1)];};
+                                }
+                    if(j<COL-3){l+=(j==0)    ?2*x[IDX(i,j+1)]:x[IDX(i,j+1)];
+                                if (j==COL-2){l-=sac_1*x[IDX(i,j)];l+=x[IDX(i,j+1)];};
+                                }
+                    b[IDX(i,j)]=l;
+                }
+            } 
+        }
+        else{
+            for (i=0;i<ROW-2;i++){
+                for (j=0;j<COL-2;j++){
+                    double l = -4*x[IDX(i,j)];
+                    if(i>0)    {l+=x[IDX(i-1,j)];}
+                    if(i<ROW-3){l+=x[IDX(i+1,j)];}
+                    if(j>0)    {l+=(j==COL-3)?2*x[IDX(i,j-1)]:x[IDX(i,j-1)];}
+                    if(j<COL-3){l+=(j==0)    ?2*x[IDX(i,j+1)]:x[IDX(i,j+1)];}
+                    b[IDX(i,j)]=l;
+                }
+            }  
+        }
+    }
+    else if(BC==2){
+        for (i=0;i<ROW-2;i++){
+            for (j=0;j<COL-2;j++){
+                double l = -4*x[IDX(i,j)];
+                if(i>0)    {l+=x[IDX(i-1,j)];}
+                if(i<ROW-3){l+=x[IDX(i+1,j)];}
+                if(j>0)    {l+=x[IDX(i,j-1)];}
+                if(j<COL-3){l+=x[IDX(i,j+1)];}
+                b[IDX(i,j)]=l;
+            }
+        }
     }
 }
 
@@ -547,7 +805,7 @@ double vvdot(double *a, double *b)
     int i;
     double c = 0;
 
-    for (i=0;i<ROW*COL;i++){
+    for (i=0;i<(ROW-2)*(COL-2);i++){
         c = c + a[i]*b[i];
     }
 
