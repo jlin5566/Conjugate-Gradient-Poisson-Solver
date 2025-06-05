@@ -37,3 +37,5 @@
   - [ ] Performance with and without parallelization
 
 ### Division of work
+  - OpenMP & MPI **林銘峻**
+  - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells) **林傑澄**
