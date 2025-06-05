@@ -67,6 +67,7 @@ plt.title(f"Comparison of Analytic, CG, and SOR Solutions at y = {float(y_a[mask
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig(f"Result comparison.png", dpi=300)
 plt.show()
 
 # ---------------------------------------------------------
@@ -82,4 +83,5 @@ plt.title(f"Error of CG and SOR Compared to Analytic at y = {float(y_a[mask_a][0
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
+plt.savefig(f"Error comparison.png", dpi=300)
 plt.show()

@@ -1,4 +1,4 @@
-// no parallelization, no even-odd ordering, assign N, method, BC, use_matrix_A in the command
+// no parallelization, no odd-even ordering, assign BC, use_matrix_A(optional) in the command
 #define ROW 100
 #define COL 100
 #define pi 3.141592

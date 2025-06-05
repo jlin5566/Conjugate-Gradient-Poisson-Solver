@@ -41,6 +41,5 @@ for idx, (fname, title) in enumerate(filenames):
 axes[-1].axis("off")
 
 plt.tight_layout()
+plt.savefig(f"Visualization.png", dpi=300)
 plt.show()
-
-# plt.savefig(f"analytic.png", dpi=345)
