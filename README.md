@@ -1,3 +1,6 @@
+# Ongoing works
+- 正在把Conjugate-Gradient-Poisson-Solve.cpp和Conjugate-Gradient-Poisson-Solver_2nd.cpp合體
+  
 # Checklist
 - 你各位趕緊動起來做事阿。 5/24
 - Please use the Fork→Pull→Push→Pull Request→Merge workflow. This is the requirement of the final project. 6/5
