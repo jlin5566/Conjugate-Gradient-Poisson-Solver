@@ -29,10 +29,7 @@
  - Performance  
    - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)  
    - Compare the performance with SOR
+   - Performance with and without parallelization
   
-### Issues  
- - Make sure at least one PC can use OpenMP, MPI, and GPU to demonstrate the results.
-
-___________________________
 ### Division of work  
 
