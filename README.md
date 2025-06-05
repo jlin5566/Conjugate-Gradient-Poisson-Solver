@@ -1,5 +1,6 @@
 # Ongoing works
 - 正在把Conjugate-Gradient-Poisson-Solve.cpp和Conjugate-Gradient-Poisson-Solver_2nd.cpp合體
+- 正在新增Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)功能進去plot_results.py
   
 # Checklist
 - 你各位趕緊動起來做事阿。 5/24
