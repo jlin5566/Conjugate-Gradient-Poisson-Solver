@@ -1,5 +1,5 @@
 # Ongoing works
-- 做Principles投影片
+- 做Principle投影片
 
 
 # Checklist
