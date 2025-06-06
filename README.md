@@ -1,6 +1,5 @@
 # Ongoing works
-- 做Principle投影片
-
+- 做投影片
 
 # Checklist
 - 你各位趕緊動起來做事阿。 5/24
