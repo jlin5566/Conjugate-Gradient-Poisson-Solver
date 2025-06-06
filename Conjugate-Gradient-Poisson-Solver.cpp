@@ -1,6 +1,6 @@
 // no parallelization, no odd-even ordering, assign BC, use_matrix_A(optional) in the command
-#define ROW 100
-#define COL 100
+//#define ROW 100
+//#define COL 100
 #define pi 3.141592
 #define itmax 1000000
 
@@ -11,6 +11,8 @@
 // #include <omp.h>
 #include <string.h>
 
+int ROW = 100;
+int COL = 100;
 
 void initialization(double **p);
 void write_u(const char *dir_nm,const char *file_nm, double **p,double dx, double dy);
