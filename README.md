@@ -7,7 +7,7 @@
 
 ### Program
 - [ ] **Conjugate gradient method to solve the 2D Poisson equation**
-  - [x] CSR (Compressed Sparse Row) matrix **羅X鴻**
+  - [x] CSR (Compressed Sparse Row) matrix 
   - [ ] MKL
 - [ ] **SOR method to solve the 2D Poisson equation**
   - [ ] Odd-even ordering
@@ -17,7 +17,7 @@
   - [ ] GPU
 - [x] **Performance**
   - [x] Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)
-  - [x] Compare the performance with SOR **蔡X倫**
+  - [x] Compare the performance with SOR 
 
 ### Slides & presentation
 - [ ] **Introduction**
@@ -36,10 +36,10 @@
   - [ ] Performance with and without parallelization
 
 ### Division of work
-  - OpenMP & MPI **林銘峻**
-  - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells) **林X澄**
-  - Slides & presentation of Introduction **林X澄**
-  - Slides & presentation of Principles **林X澄**
-  - Slides & presentation of Implementation **羅X鴻**
-  - Slides & presentation of Conjugate gradient method **林銘峻**
-  - Slides & presentation of Performance **蔡X倫**
+  - OpenMP & MPI 
+  - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells) 
+  - Slides & presentation of Introduction 
+  - Slides & presentation of Principles 
+  - Slides & presentation of Implementation 
+  - Slides & presentation of Conjugate gradient method 
+  - Slides & presentation of Performance 
