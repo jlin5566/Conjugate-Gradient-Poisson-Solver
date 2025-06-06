@@ -21,6 +21,7 @@
   - [x] Compare the performance with SOR **蔡X倫**
 
 ### Slides & presentation
+- [ ] **Introduction**
 - [ ] **Principle**
 - [ ] **Implementation**
   - [ ] Conjugate gradient method
@@ -38,6 +39,7 @@
 ### Division of work
   - OpenMP & MPI **林銘峻**
   - Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells) **林X澄**
+  - Slides & presentation of Introduction **林X澄**
   - Slides & presentation of Principles **林X澄**
   - Slides & presentation of Implementation **羅X鴻**
   - Slides & presentation of Conjugate gradient method **林銘峻**
