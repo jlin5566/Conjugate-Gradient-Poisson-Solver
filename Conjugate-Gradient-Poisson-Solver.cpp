@@ -1,6 +1,4 @@
 // no parallelization, no odd-even ordering, assign BC, use_matrix_A(optional) in the command
-//#define ROW 100
-//#define COL 100
 #define pi 3.141592
 #define itmax 1000000
 
@@ -178,13 +176,17 @@ int main(int argc, char *argv[])
 {
     int BC       = 1;
     bool use_matrix_A = false;
-    if (argc==2){
-        BC       = atoi(argv[1]);
-    }
-    else if (argc ==3 && strcmp(argv[2], "true") == 0) {use_matrix_A = true;}
+
+    // 參數解析
+    if (argc >= 2) BC = atoi(argv[1]);
+    if (argc >= 3) use_matrix_A = (strcmp(argv[2], "true") == 0);
+    if (argc >= 4) ROW = atoi(argv[3]);
+    if (argc >= 5) COL = atoi(argv[4]);
+
+    printf("設定後 Nx : %d, Ny : %d\n", ROW, COL);
+
     double **u;
     double **u_anal;
-
     const char *dir_name ;
 
     int i;
@@ -199,23 +201,11 @@ int main(int argc, char *argv[])
     u      = (double **) malloc(ROW *sizeof(double *));//用來存儲數值解
     u_anal = (double **) malloc(ROW *sizeof(double *));//用來存儲解析解
 
-    // if (u == NULL || u_anal == NULL){
-    //     fprintf(stderr, "malloc error\n");
-    //     exit(1);
-    // }
-
-
     for (i=0;i<ROW;i++)
     {
       u[i]      = (double *) malloc(COL * sizeof(double));
       u_anal[i] = (double *) malloc(COL * sizeof(double));
-    //   if (u[i] == NULL || u_anal[i] == NULL){
-    //     fprintf(stderr, "malloc col[%d] error\n", i);
-    //     exit(1);
-    //   }
     }
-
-
 
     //--------------------
     //   Initial setting
@@ -230,19 +220,6 @@ int main(int argc, char *argv[])
     printf("Tolerance : %e, Omega : %f \n",tol, omega);
     printf("---------------------------------------- \n");
     printf("\n");
-
-    //----------------------------------------
-    //       Poisson Solver Type
-    //
-    // BC = 1 : Boundary condition Case 1
-    //    = 2 : Boundary condition Case 2
-    //
-    // method = 1 : Conjugate Gradient method
-    //        = 2 : SOR method
-    //
-    //----------------------------------------
-
-
 
     // -----------------------
     //       CG method
