@@ -21,7 +21,7 @@
   - [x] Compare the performance with SOR **蔡X倫**
 
 ### Slides & presentation
-- [ ] **Principles**
+- [ ] **Principle**
 - [ ] **Implementation**
   - [ ] Conjugate gradient method
     - [ ] CSR (Compressed Sparse Row) matrix
