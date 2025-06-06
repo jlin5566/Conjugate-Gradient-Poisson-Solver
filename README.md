@@ -1,5 +1,5 @@
 # Ongoing works
-- 正在新增Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)功能進去plot_results.py
+- 做Principles投影片
 
 
 # Checklist
