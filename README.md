@@ -16,8 +16,8 @@
   - [ ] OpenMP
   - [ ] MPI
   - [ ] GPU
-- [ ] **Performance**
-  - [ ] Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)
+- [x] **Performance**
+  - [x] Accuracy and performance & performance scaling (i.e., wall-clock time vs. number of cells)
   - [x] Compare the performance with SOR **蔡X倫**
 
 ### Slides & presentation
